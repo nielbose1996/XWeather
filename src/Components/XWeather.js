@@ -160,13 +160,32 @@ const WeatherDisplay = ({ city }) => {
     );
 };
 
-
 export default function XWeather() {
     const [city, setCity] = useState("");
 
     const handleSearch = (searchCity) => {
         setCity(searchCity);
     };
+
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const { latitude, longitude } = position.coords;
+                axios.get("https://api.weatherapi.com/v1/current.json", {
+                    params: {
+                        key: "fbbbff56dd5b4bfdb1c153003242701",
+                        q: `${latitude},${longitude}`,
+                    },
+                }).then((response) => {
+                    setCity(`${response.data.location.name}, ${response.data.location.region}, ${response.data.location.country}`);
+                }).catch((error) => {
+                    alert("Failed to fetch initial weather data based on location");
+                });
+            }, (error) => {
+                alert("Geolocation is not enabled. Please enter your city manually.");
+            });
+        }
+    }, []);
 
     return (
         <div className='App'>
