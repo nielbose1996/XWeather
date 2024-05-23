@@ -68,9 +68,29 @@ const ActivitySuggestions = ({ condition }) => {
     );
 };
 
+// ForecastWeather component
+const ForecastWeather = ({ forecastData }) => (
+    <div className='forecast'>
+        <h3>3-Day Forecast</h3>
+        <div className='forecast-cards'>
+            {forecastData.map((day, index) => (
+                <div key={index} className='forecast-card'>
+                    <h4>{new Date(day.date).toLocaleDateString()}</h4>
+                    <p>Max Temp: {day.day.maxtemp_c}°C</p>
+                    <p>Min Temp: {day.day.mintemp_c}°C</p>
+                    <p>Condition: {day.day.condition.text}</p>
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+// Updated WeatherDisplay component
 const WeatherDisplay = ({ city }) => {
     const [weatherData, setWeatherData] = useState(null);
+    const [forecastData, setForecastData] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [showAllCards, setShowAllCards] = useState(false);
 
     useEffect(() => {
         if (city) {
@@ -87,8 +107,24 @@ const WeatherDisplay = ({ city }) => {
             }).finally(() => {
                 setLoading(false);
             });
+
+            axios.get("https://api.weatherapi.com/v1/forecast.json", {
+                params: {
+                    key: "fbbbff56dd5b4bfdb1c153003242701",
+                    q: city,
+                    days: 3,
+                },
+            }).then((response) => {
+                setForecastData(response.data.forecast.forecastday);
+            }).catch((error) => {
+                alert("Failed to fetch forecast data");
+            });
         }
     }, [city]);
+
+    const toggleShowAllCards = () => {
+        setShowAllCards(!showAllCards);
+    };
 
     return (
         <div className='weather-display'>
@@ -104,13 +140,26 @@ const WeatherDisplay = ({ city }) => {
                         <WeatherCard title="Humidity" value={`${weatherData.current.humidity}%`} />
                         <WeatherCard title="Condition" value={`${weatherData.current.condition.text}`} />
                         <WeatherCard title="Wind Speed" value={`${weatherData.current.wind_kph} kph`} />
+                        {showAllCards && (
+                            <>
+                                <WeatherCard title="Feels Like" value={`${weatherData.current.feelslike_c}°C`} />
+                                <WeatherCard title="UV Index" value={weatherData.current.uv} />
+                                <WeatherCard title="Visibility" value={`${weatherData.current.vis_km} km`} />
+                                <WeatherCard title="Precipitation" value={`${weatherData.current.precip_mm} mm`} />
+                            </>
+                        )}
                     </div>
+                    <button className='button' onClick={toggleShowAllCards}>
+                        {showAllCards ? "Show Less" : "Show More"}
+                    </button>
                     <ActivitySuggestions condition={weatherData.current.condition.text} />
+                    {forecastData && <ForecastWeather forecastData={forecastData} />}
                 </>
             )}
         </div>
     );
 };
+
 
 export default function XWeather() {
     const [city, setCity] = useState("");
