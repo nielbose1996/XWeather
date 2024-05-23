@@ -68,7 +68,6 @@ const ActivitySuggestions = ({ condition }) => {
     );
 };
 
-// ForecastWeather component
 const ForecastWeather = ({ forecastData }) => (
     <div className='forecast'>
         <h3>3-Day Forecast</h3>
@@ -85,7 +84,6 @@ const ForecastWeather = ({ forecastData }) => (
     </div>
 );
 
-// Updated WeatherDisplay component
 const WeatherDisplay = ({ city }) => {
     const [weatherData, setWeatherData] = useState(null);
     const [forecastData, setForecastData] = useState(null);
@@ -95,29 +93,32 @@ const WeatherDisplay = ({ city }) => {
     useEffect(() => {
         if (city) {
             setLoading(true);
-            axios.get("https://api.weatherapi.com/v1/current.json", {
-                params: {
-                    key: "fbbbff56dd5b4bfdb1c153003242701",
-                    q: city,
-                },
-            }).then((response) => {
-                setWeatherData(response.data);
-            }).catch((error) => {
-                alert("Failed to fetch weather data");
-            }).finally(() => {
-                setLoading(false);
-            });
 
-            axios.get("https://api.weatherapi.com/v1/forecast.json", {
-                params: {
-                    key: "fbbbff56dd5b4bfdb1c153003242701",
-                    q: city,
-                    days: 3,
-                },
-            }).then((response) => {
-                setForecastData(response.data.forecast.forecastday);
-            }).catch((error) => {
-                alert("Failed to fetch forecast data");
+            // Combining both API calls into a single promise
+            Promise.all([
+                axios.get("https://api.weatherapi.com/v1/current.json", {
+                    params: {
+                        key: "fbbbff56dd5b4bfdb1c153003242701",
+                        q: city,
+                    },
+                }),
+                axios.get("https://api.weatherapi.com/v1/forecast.json", {
+                    params: {
+                        key: "fbbbff56dd5b4bfdb1c153003242701",
+                        q: city,
+                        days: 3,
+                    },
+                })
+            ])
+            .then(([currentResponse, forecastResponse]) => {
+                setWeatherData(currentResponse.data);
+                setForecastData(forecastResponse.data.forecast.forecastday);
+            })
+            .catch((error) => {
+                alert("Failed to fetch weather data");
+            })
+            .finally(() => {
+                setLoading(false);
             });
         }
     }, [city]);
